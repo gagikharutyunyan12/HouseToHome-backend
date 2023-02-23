@@ -1,7 +1,7 @@
 const UserRepositories = require('../repositories/user.repositories');
 const UserDto = require('../dto/userDto');
 const uuid = require('uuid');
-const { BadRequest, AuthError, NotFound, ValidationError } = require('../exceptions/index')
+const { BadRequest, NotFound, ValidationError } = require('../exceptions/index')
 const {ALREADY_EXISTS, IS_INVALID, NOT_EXISTS} = require("../utils/constants");
 const tokenService = require('./token.service');
 const mailService = require('./mail.service')
@@ -130,17 +130,17 @@ class UserService extends UserRepositories {
         await tokenService.saveToken(userDto.id, tokens.refreshToken);
         return {...tokens, user: userDto};
     }
-    async getAllUsers() {
-        const users = await this.getAllUsers();
-        return users
+
+    async addFavorite(userId, prdId) {
+        const user = await this.addToFavorites(userId, prdId);
+
+        return new UserDto(user);
     }
-    async getSingleUser(id) {
-        const user = await this.getById(id)
-        return user
-    }
-    async deleteUser(id) {
-        const user = await this.deleteUser(id)
-        return user;
+
+    async removeFavorite(userId, prdId) {
+        const user = await this.removeFromFavorites(userId, prdId);
+
+        return new UserDto(user);
     }
 }
 

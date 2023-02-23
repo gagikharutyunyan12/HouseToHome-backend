@@ -21,11 +21,20 @@ class UserRepositories {
     async getByResetPasswordToken(resetPasswordToken) {
         return await this.model.findOne({resetPasswordToken, resetPasswordExpires: { $gt: Date.now() }}).exec()
     }
-    async getAllUsers() {
-        return await this.model.find().exec();
+    async addToFavorites(user, prd) {
+        return await this.model.findOneAndUpdate(
+            {_id: user},
+            {$addToSet: {favorites: prd}},
+            {new: true},
+        ).exec()
     }
-    async deleteUser(id) {
-        return await this.model.findByIdAndDelete(id).exec();
+
+    async removeFromFavorites(user, prd) {
+        return await this.model.findOneAndUpdate(
+            {_id: user},
+            {$pull: {favorites: prd}},
+            {new: true},
+        ).exec()
     }
 }
 

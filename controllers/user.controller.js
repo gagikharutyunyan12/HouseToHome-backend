@@ -1,4 +1,5 @@
 const userService = require('../services/user.service');
+const { SUCCESS_CODE, CREATED_CODE } = require('../exceptions/status-code')
 
 class UserController {
     async register(req, res, next) {
@@ -6,7 +7,7 @@ class UserController {
             const {email, password, phoneNumber, firstName, lastName, role} = req.body;
             const userData = await userService.register(email, password, phoneNumber, firstName, lastName, role)
             res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000})
-            return res.json(userData)
+            return res.status(CREATED_CODE).json(userData)
         } catch (e) {
             next(e)
         }
@@ -15,7 +16,7 @@ class UserController {
         try {
             const activationLink = req.params.id;
             await userService.activate(activationLink);
-            return res.redirect("https://github.com/gagikharutyunyan12")
+            return res.status(SUCCESS_CODE).redirect("https://github.com/gagikharutyunyan12")
         } catch (e) {
             next(e)
         }
@@ -26,7 +27,7 @@ class UserController {
             const { email, password } = req.body;
             const user = await userService.login(email, password);
             res.cookie('refreshToken', user.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true});
-            return res.json(user);
+            return res.status(SUCCESS_CODE).json(user);
         } catch (e) {
             next(e)
         }
@@ -37,7 +38,7 @@ class UserController {
             await userService.logout(refreshToken)
 
             res.clearCookie('refreshToken')
-            return res.status(200).json({
+            return res.status(SUCCESS_CODE).json({
                 success: true,
                 message: "Successfully logged out!"
             })
@@ -49,7 +50,7 @@ class UserController {
         try {
             const user = await userService.getUserDetails(req.user.id);
 
-            return res.json(user)
+            return res.status(SUCCESS_CODE).json(user)
         } catch (e) {
             next(e)
         }
@@ -59,7 +60,7 @@ class UserController {
             const { email } = req.body;
 
             await userService.forgotPassword(email);
-            return res.json({
+            return res.status(SUCCESS_CODE).json({
                 success: true,
                 message: `Email sent to ${email} successfully`
             })
@@ -72,7 +73,7 @@ class UserController {
             const { password } = req.body;
 
             const user = await userService.resetPassword(password, req.params.token);
-            return res.json(user)
+            return res.status(SUCCESS_CODE).json(user)
         } catch (e) {
             next(e)
         }
@@ -82,39 +83,32 @@ class UserController {
             const { oldPassword, newPassword } = req.body;
 
             const user = await userService.updatePassword(req.user.id, oldPassword, newPassword);
-            return res.json(user)
+            return res.status(SUCCESS_CODE).json(user)
         } catch (e) {
             next(e)
+        }
+    }
+    async addFavorite(req, res, next) {
+        try {
+            const {userId, propertyId} = req.body;
+            const user  = await userService.addFavorite(userId, propertyId);
+            res.cookie('favorites', JSON.stringify(user.favorites), { maxAge: 60 * 60 * 24 * 365, httpOnly: true });
+
+            return res.status(SUCCESS_CODE).json(user);
+        } catch (e) {
+            next(e);
         }
     }
 
+    async removeFavorite(req, res, next) {
+        try {
+            const {userId, propertyId} = req.body;
+            const user  = await userService.removeFavorite(userId, propertyId);
+            res.cookie('favorites', JSON.stringify(user.favorites), { maxAge: 60 * 60 * 24 * 365, httpOnly: true });
 
-    /*  ADMIN COMMANDS  */
-    async getAllUsers(req, res, next) {
-        try {
-            const users = await userService.getAllUsers();
-            return res.json(users);
+            return res.status(200).json(user);
         } catch (e) {
-            next(e)
-        }
-    }
-    async getSingleUser(req, res, next) {
-        try {
-            const user = await userService.getSingleUser(req.params.id)
-            return res.json(user)
-        } catch (e) {
-            next(e)
-        }
-    }
-    async deleteUser(req, res, next) {
-        try {
-            await userService.deleteUser(req.params.id);
-            return res.json({
-                success: true,
-                message: "User successfully deleted"
-            })
-        } catch (e) {
-            next(e)
+            next(e);
         }
     }
 }
